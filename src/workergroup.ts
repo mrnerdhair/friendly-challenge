@@ -11,6 +11,20 @@ if (typeof window !== "undefined") {
   URL = window.URL || window.webkitURL;
 }
 
+// Capture an immutable, trusted copy of the raw workerString on init.
+const workerUrlFactory = ((workerString) => {
+  let rawPolicy = {
+    // The presence of the input parameter is required by the Trusted Types specification;
+    // including it here allows TypeScript to understand that it must be passed in.
+    createScriptURL(_input: string) {
+      const workerBlob = new Blob([workerString] as any, { type: "text/javascript" });
+      return URL.createObjectURL(workerBlob);
+    }
+  };
+  if (window.trustedTypes) rawPolicy = window.trustedTypes.createPolicy('friendly-captcha', rawPolicy);
+  return rawPolicy.createScriptURL.bind(rawPolicy, "");
+})(workerString);
+
 export class WorkerGroup {
   private workers: Worker[] = [];
 
@@ -48,10 +62,10 @@ export class WorkerGroup {
 
     // Setup four workers for now - later we could calculate this depending on the device
     this.workers = new Array(4);
-    const workerBlob = new Blob([workerString] as any, { type: "text/javascript" });
+    const workerUrl = workerUrlFactory();
 
     for (let i = 0; i < this.workers.length; i++) {
-      this.workers[i] = new Worker(URL.createObjectURL(workerBlob));
+      this.workers[i] = new Worker(workerUrl);
       this.workers[i].onerror = (e: ErrorEvent) => this.errorCallback(e);
 
       this.workers[i].onmessage = (e: any) => {

@@ -1,32 +1,32 @@
+import { html, render, svg } from "lit-html";
 // @ts-ignore
 import css from "./styles.css";
 import { ProgressMessage, DoneMessage } from "./types";
 import { SOLVER_TYPE_JS } from "friendly-pow/constants";
 import { Localization } from "./localization";
 
-const loaderSVG = `<circle cx="12" cy="12" r="8" stroke-width="3" stroke-dasharray="15 10" fill="none" stroke-linecap="round" transform="rotate(0 12 12)"><animateTransform attributeName="transform" type="rotate" repeatCount="indefinite" dur="0.9s" values="0 12 12;360 12 12"/></circle>`;
-const errorSVG = `<path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>`;
+const loaderSVG = svg`<circle cx="12" cy="12" r="8" stroke-width="3" stroke-dasharray="15 10" fill="none" stroke-linecap="round" transform="rotate(0 12 12)"><animateTransform attributeName="transform" type="rotate" repeatCount="indefinite" dur="0.9s" values="0 12 12;360 12 12"/></circle>`;
+const errorSVG = svg`<path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>`;
 
 /**
  * Base template used for all widget states
- * The reason we use raw string interpolation here is so we don't have to ship something like lit-html.
  */
 function getTemplate(
   fieldName: string,
-  svgContent: string,
-  textContent: string,
+  svgContent: ReturnType<typeof svg>,
+  textContent: string | ReturnType<typeof html>,
   solutionString: string,
   buttonText?: string,
   progress = false,
   debugData?: string,
   additionalContainerClasses?: string
 ) {
-  return `<div class="frc-container${additionalContainerClasses ? " " + additionalContainerClasses : ""}">
+  return html`<div class="frc-container${additionalContainerClasses ? " " + additionalContainerClasses : ""}">
 <svg class="frc-icon" role="img" xmlns="http://www.w3.org/2000/svg" height="32" width="32" viewBox="0 0 24 24">${svgContent}</svg>
 <div class="frc-content">
     <span class="frc-text" ${debugData ? `title="${debugData}"` : ``}>${textContent}</span>
-    ${buttonText ? `<button type="button" class="frc-button">${buttonText}</button>` : ""}
-    ${progress ? `<progress class="frc-progress" value="0">0%</progress>` : ""}
+    ${buttonText ? html`<button type="button" class="frc-button">${buttonText}</button>` : ""}
+    ${progress ? html`<progress class="frc-progress" value="0">0%</progress>` : ""}
 </div>
 </div><span class="frc-banner"><a href="https://friendlycaptcha.com/" rel="noopener" target="_blank"><b>Friendly</b>Captcha ⇗</a></span>
 <input name="${fieldName}" class="frc-captcha-solution" type="hidden" value="${solutionString}">`;
@@ -38,7 +38,7 @@ function getTemplate(
 export function getReadyHTML(fieldName: string, l: Localization) {
   return getTemplate(
     fieldName,
-    `<path d="M17,11c0.34,0,0.67,0.04,1,0.09V6.27L10.5,3L3,6.27v4.91c0,4.54,3.2,8.79,7.5,9.82c0.55-0.13,1.08-0.32,1.6-0.55 C11.41,19.47,11,18.28,11,17C11,13.69,13.69,11,17,11z"/><path d="M17,13c-2.21,0-4,1.79-4,4c0,2.21,1.79,4,4,4s4-1.79,4-4C21,14.79,19.21,13,17,13z M17,14.38"/>`,
+    svg`<path d="M17,11c0.34,0,0.67,0.04,1,0.09V6.27L10.5,3L3,6.27v4.91c0,4.54,3.2,8.79,7.5,9.82c0.55-0.13,1.08-0.32,1.6-0.55 C11.41,19.47,11,18.28,11,17C11,13.69,13.69,11,17,11z"/><path d="M17,13c-2.21,0-4,1.79-4,4c0,2.21,1.79,4,4,4s4-1.79,4-4C21,14.79,19.21,13,17,13z M17,14.38"/>`,
     l.text_ready,
     ".UNSTARTED",
     l.button_start,
@@ -66,7 +66,7 @@ export function getDoneHTML(fieldName: string, l: Localization, solution: string
   }`;
   return getTemplate(
     fieldName,
-    `<title>${timeData}</title><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-2 16l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z"></path>`,
+    svg`<title>${timeData}</title><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-2 16l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z"></path>`,
     l.text_completed,
     solution,
     undefined,
@@ -84,7 +84,7 @@ export function getErrorHTML(fieldName: string, l: Localization, errorDescriptio
   return getTemplate(
     fieldName,
     errorSVG,
-    `<b>${l.text_error}</b><br>${errorDescription}`,
+    html`<b>${l.text_error}</b><br>${errorDescription}`,
     headless ? ".HEADLESS_ERROR" : ".ERROR",
     recoverable ? l.button_retry : undefined
   );
@@ -104,10 +104,8 @@ export function findCaptchaElements() {
  */
 export function injectStyle() {
   if (!document.querySelector("#frc-style")) {
-    const styleSheet = document.createElement("style");
-    styleSheet.id = "frc-style";
-    styleSheet.innerHTML = css;
-    document.head.appendChild(styleSheet);
+    const styleSheet = html`<style id="frc-style">${css}</style>`;
+    render(styleSheet, document.head);
   }
 }
 

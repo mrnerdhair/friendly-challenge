@@ -1,4 +1,5 @@
 import { encode } from "friendly-pow/base64";
+import { render } from "lit-html";
 import {
   getRunningHTML,
   getReadyHTML,
@@ -143,7 +144,7 @@ export class WidgetInstance {
 
   private onWorkerError(e: any) {
     this.needsReInit = true;
-    this.e.innerHTML = getErrorHTML(this.opts.solutionFieldName, this.lang, "Background worker error " + e.message);
+    render(getErrorHTML(this.opts.solutionFieldName, this.lang, "Background worker error " + e.message), this.e);
     this.makeButtonStart();
 
     // Just out of precaution
@@ -155,12 +156,12 @@ export class WidgetInstance {
       updateProgressBar(this.e, progress);
     };
     this.workerGroup.readyCallback = () => {
-      this.e.innerHTML = getReadyHTML(this.opts.solutionFieldName, this.lang);
+      render(getReadyHTML(this.opts.solutionFieldName, this.lang), this.e);
       this.makeButtonStart();
       this.opts.readyCallback();
     };
     this.workerGroup.startedCallback = () => {
-      this.e.innerHTML = getRunningHTML(this.opts.solutionFieldName, this.lang);
+      render(getRunningHTML(this.opts.solutionFieldName, this.lang), this.e);
       this.opts.startedCallback();
     };
     this.workerGroup.doneCallback = (data) => {
@@ -180,7 +181,7 @@ export class WidgetInstance {
   }
 
   private expire() {
-    this.e.innerHTML = getExpiredHTML(this.opts.solutionFieldName, this.lang);
+    render(getExpiredHTML(this.opts.solutionFieldName, this.lang), this.e);
     this.makeButtonStart();
   }
 
@@ -199,23 +200,23 @@ export class WidgetInstance {
     const sitekey = this.opts.sitekey || this.e.dataset["sitekey"];
     if (!sitekey) {
       console.error("FriendlyCaptcha: sitekey not set on frc-captcha element");
-      this.e.innerHTML = getErrorHTML(
+      render(getErrorHTML(
         this.opts.solutionFieldName,
         this.lang,
         "Website problem: sitekey not set",
         false
-      );
+      ), this.e);
       return;
     }
 
     if (isHeadless()) {
-      this.e.innerHTML = getErrorHTML(
+      render(getErrorHTML(
         this.opts.solutionFieldName,
         this.lang,
         "Browser check failed, try a different browser",
         false,
         true
-      );
+      ), this.e);
       return;
     }
 
@@ -226,11 +227,11 @@ export class WidgetInstance {
     }
 
     try {
-      this.e.innerHTML = getFetchingHTML(this.opts.solutionFieldName, this.lang);
+      render(getFetchingHTML(this.opts.solutionFieldName, this.lang), this.e);
       this.puzzle = decodeBase64Puzzle(await getPuzzle(this.opts.puzzleEndpoint, sitekey, this.lang));
       setTimeout(() => this.expire(), this.puzzle.expiry - 30000); // 30s grace
     } catch (e: any) {
-      this.e.innerHTML = getErrorHTML(this.opts.solutionFieldName, this.lang, e.message);
+      render(getErrorHTML(this.opts.solutionFieldName, this.lang, e.message), this.e);
       this.makeButtonStart();
       const code = "error_getting_puzzle";
 
@@ -255,7 +256,7 @@ export class WidgetInstance {
     const puzzleSolutionMessage = `${this.puzzle!.signature}.${this.puzzle!.base64}.${encode(data.solution)}.${encode(
       data.diagnostics
     )}`;
-    this.e.innerHTML = getDoneHTML(this.opts.solutionFieldName, this.lang, puzzleSolutionMessage, data);
+    render(getDoneHTML(this.opts.solutionFieldName, this.lang, puzzleSolutionMessage, data), this.e);
     // this.worker = null; // This literally crashes very old browsers..
     this.needsReInit = true;
 
