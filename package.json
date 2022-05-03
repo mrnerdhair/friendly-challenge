@@ -1,5 +1,5 @@
 {
-  "name": "friendly-challenge",
+  "name": "@mrnerdhair/friendly-challenge",
   "version": "0.9.1",
   "description": "The client code used for FriendlyCaptcha (widget script, html, styling and webworker solvers)",
   "keywords": [
